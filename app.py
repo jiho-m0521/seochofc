@@ -40,7 +40,22 @@ st.markdown(f"""
             </p>
         </div>
     </div>
-""", unsafe_allow_html=True)
+    <style>
+    /* 상단 헤더 숨기기 (메뉴 버튼 포함) */
+    header {visibility: hidden;}
+
+    /* 하단 워터마크 및 푸터 숨기기 */
+    footer {visibility: hidden;}
+    
+    /* Streamlit 로고 숨기기 */
+    #MainMenu {visibility: hidden;}
+    
+    /* 화면 상단 여백 조절 (선택 사항) */
+    .block-container {
+        padding-top: 2rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # 2. 로고 처리를 위한 함수
 
