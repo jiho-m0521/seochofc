@@ -41,19 +41,21 @@ st.markdown(f"""
         </div>
     </div>
     <style>
-    /* 상단 헤더 숨기기 (메뉴 버튼 포함) */
-    header {visibility: hidden;}
+    /* 상단 헤더와 메뉴 버튼 숨기기 */
+    header {{visibility: hidden;}}
 
-    /* 하단 워터마크 및 푸터 숨기기 */
-    footer {visibility: hidden;}
+    /* 하단 "Made with Streamlit" 워터마크 숨기기 */
+    footer {{visibility: hidden;}}
     
-    /* Streamlit 로고 숨기기 */
-    #MainMenu {visibility: hidden;}
+    /* 햄버거 메뉴 숨기기 */
+    #MainMenu {{visibility: hidden;}}
+
+    /* 배경색이나 폰트 등 기존 스타일이 있다면 여기에 계속 작성 */
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    * {{ font-family: 'Pretendard', sans-serif !important; }}
     
-    /* 화면 상단 여백 조절 (선택 사항) */
-    .block-container {
-        padding-top: 2rem;
-    }
+    /* ... (기존에 있던 .player-card 등의 스타일 코드들) ... */
+    
     </style>
     """, unsafe_allow_html=True)
 
