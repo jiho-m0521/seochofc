@@ -40,24 +40,7 @@ st.markdown(f"""
             </p>
         </div>
     </div>
-    <style>
-    /* 상단 헤더와 메뉴 버튼 숨기기 */
-    header {{visibility: hidden;}}
-
-    /* 하단 "Made with Streamlit" 워터마크 숨기기 */
-    footer {{visibility: hidden;}}
-    
-    /* 햄버거 메뉴 숨기기 */
-    #MainMenu {{visibility: hidden;}}
-
-    /* 배경색이나 폰트 등 기존 스타일이 있다면 여기에 계속 작성 */
-    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-    * {{ font-family: 'Pretendard', sans-serif !important; }}
-    
-    /* ... (기존에 있던 .player-card 등의 스타일 코드들) ... */
-    
-    </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # 2. 로고 처리를 위한 함수
 
