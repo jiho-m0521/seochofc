@@ -607,11 +607,8 @@ if menu == "🏠 홈 (MATCHDAY)":
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-        if st.button("상세 정보 확인 🔍", key="next_match_click", use_container_width=True):
-            # 경기 데이터가 있다면 세션에 저장 (next_match 변수가 정의되어 있어야 함)
-            if 'next_match' in locals():
-                st.session_state.selected_match = next_match.to_dict() # type: ignore
-            st.session_state.menu_option = "📋 DETAIL"
+        if st.button("📅 경기 일정 보기", key="next_match_click", use_container_width=True):
+            st.session_state.menu_option = "📅 SCHEDULE"
             st.rerun()
 
     # --- [2. 5월 우수 선수 TOP 3 출력 강화] --- 
@@ -739,6 +736,16 @@ elif menu == "📋 DETAIL":
     # 선택된 경기 데이터 확인
     match = st.session_state.get('selected_match', None)
     
+    if match is None:
+        # 데이터가 없을 때의 예외 처리
+        if not df_all['schedule'].empty:
+            # 가장 가까운 경기를 기본값으로 세팅 (자동 복구)
+            match = df_all['schedule'].iloc[0].to_dict()
+            st.session_state.selected_match = match
+        else:
+            st.warning("표시할 경기 데이터가 없습니다. 일정 페이지에서 경기를 선택해주세요.")
+            st.stop()
+
     if match:
         opp = match['상대'].replace('vs ', '').strip()
         # 뒤로가기 버튼
@@ -982,37 +989,51 @@ elif menu == "📊 성적 분석":
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
-                # 5. 개별 선수 명단 리스트 (등급 배지 추가)
+                # 5. 개별 선수 명단 리스트 (한 줄 나열 + 평점 내림차순 정렬)
                 st.markdown(f"#### 📋 개별 선수 랭킹")
-                
+
                 if not df_match.empty:
-                    m_cols = st.columns(2)
-                    for idx, (i, row) in enumerate(df_match.iterrows()):
+                    # --- 데이터 준비 및 내림차순 정렬 ---
+                    rating_data = []
+                    for i, row in df_match.iterrows():
                         p_name = row['이름']
                         p_score = pd.to_numeric(row[selected_date], errors='coerce')
                         
                         if pd.notna(p_score):
-                            # --- 등급 판정 로직 (월간 리포트와 동일 기준) ---
+                            # 등급 판정 로직
                             if p_score >= 7.0: tier, color = "A", "#ff4b4b"
                             elif p_score >= 6.5: tier, color = "B", "#003399"
                             else: tier, color = "C", "#555555"
+                            
+                            rating_data.append({
+                                'name': p_name,
+                                'score': float(p_score),
+                                'tier': tier,
+                                'color': color
+                            })
 
-                            with m_cols[idx % 2]:
-                                st.markdown(f"""
-                                    <div style="background: white; padding: 15px 20px; border-radius: 12px; border: 1px solid #eee; 
-                                                margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; 
-                                                box-shadow: 0 2px 5px rgba(0,0,0,0.02); border-left: 4px solid {color};">
-                                        <div style="display:flex; align-items:center; gap:12px;">
-                                            <span style="color:#ccc; font-weight:800; font-size:1.1rem;">{idx+1}</span>
-                                            <div>
-                                                <div style="font-weight: 700; color:#1a1a1a; font-size:1.05rem; display:flex; align-items:center; gap:8px;">
-                                                    {p_name}
-                                                    <span style="background:{color}; color:white; font-size:0.7rem; padding:1px 6px; border-radius:4px;">{tier}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style="background: #f0f2f6; color: #003399; padding: 5px 15px; border-radius: 20px; font-weight: 800; font-size: 1rem;">
-                                            {float(p_score):.1f}
+                    # 평점(score) 기준 내림차순 정렬
+                    rating_data = sorted(rating_data, key=lambda x: x['score'], reverse=True)
+
+                    # --- 일자로 쭉 나열 (st.columns를 사용하지 않음) ---
+                    for idx, p in enumerate(rating_data):
+                        st.markdown(f"""
+                            <div style="background: white; padding: 15px 20px; border-radius: 12px; border: 1px solid #eee; 
+                                        margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; 
+                                        box-shadow: 0 2px 5px rgba(0,0,0,0.02); border-left: 5px solid {p['color']};">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <span style="color:#ccc; font-weight:800; font-size:1.1rem; width:25px;">{idx+1}</span>
+                                    <div>
+                                        <div style="font-weight: 700; color:#1a1a1a; font-size:1.05rem; display:flex; align-items:center; gap:8px;">
+                                            {p['name']}
+                                            <span style="background:{p['color']}; color:white; font-size:0.7rem; padding:1px 6px; border-radius:4px;">{p['tier']}</span>
                                         </div>
                                     </div>
-                                """, unsafe_allow_html=True)
+                                </div>
+                                <div style="background: #f0f2f6; color: #003399; padding: 5px 15px; border-radius: 20px; font-weight: 800; font-size: 1rem;">
+                                    {p['score']:.1f}
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("기록된 선수 평점이 없습니다.")
