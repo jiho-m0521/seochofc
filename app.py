@@ -25,6 +25,34 @@ def get_base64_image(image_path):
 logo_b64 = get_base64_image("image_4ba137.png")
 st.set_page_config(page_title="2026 서초중 축구부", page_icon="⚽", layout="wide")
 
+# --- [상단 네비바] ---
+query_params = st.query_params
+menu_key = query_params.get("menu", ["home"])[0] if query_params else "home"
+if menu_key not in ["home", "roster", "report"]:
+    menu_key = "home"
+
+menu = "🏠 홈 (MATCHDAY)"
+if menu_key == "roster":
+    menu = "🏃 선수단 명단"
+elif menu_key == "report":
+    menu = "📊 성적 분석"
+
+nav_html = f"""
+    <style>
+    .top-navbar {{ display: flex; justify-content: center; gap: 16px; padding: 16px 0; background: #003399; position: sticky; top: 0; z-index: 999; box-shadow: 0 3px 12px rgba(0,0,0,0.12); margin-bottom: 24px; }}
+    .top-navbar a {{ color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 999px; font-size: 1rem; font-weight: 700; transition: all 0.18s ease; border: 1px solid transparent; }}
+    .top-navbar a:hover {{ background: rgba(255,255,255,0.14); }}
+    .top-navbar a.active {{ background: #ffffff; color: #003399; border-color: rgba(255,255,255,0.4); }}
+    </style>
+    <div class="top-navbar">
+        <a class="{'active' if menu_key == 'home' else ''}" href="?menu=home">🏠 홈 (MATCHDAY)</a>
+        <a class="{'active' if menu_key == 'roster' else ''}" href="?menu=roster">🏃 선수단 명단</a>
+        <a class="{'active' if menu_key == 'report' else ''}" href="?menu=report">📊 성적 분석</a>
+    </div>
+"""
+
+st.markdown(nav_html, unsafe_allow_html=True)
+
 # --- [신규 추가] 상단 헤더 (로고 및 타이틀) ---
 header_logo_html = f'data:image/png;base64,{logo_b64}' if logo_b64 else "https://cdn-icons-png.flaticon.com/512/53/53283.png"
 
@@ -48,140 +76,45 @@ st.markdown(f"""
 
 
 
-# 3. 전체 스타일 커스텀 (줄무늬 및 키퍼 색상 추가)
-
+# 3. 전체 스타일 커스텀 (수정 버전)
 st.markdown("""
-
     <style>
-
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
-   
+    /* 1. 기본 폰트 설정 (아이콘 폰트 제외) */
+    :not(i):not(.material-icons):not([class*="lucide"]) {
+        font-family: 'Pretendard', sans-serif !important;
+    }
 
-    * { font-family: 'Pretendard', sans-serif !important; }
+    /* 2. 스트림릿 내부 아이콘 클래스 강제 복구 */
+    .st-emotion-cache-16ids0d, .st-emotion-cache-15494f6, [data-testid="stIcon"] {
+        font-family: "lucide-icons" !important;
+        font-style: normal;
+        font-weight: normal;
+        font-variant: normal;
+        text-transform: none;
+        line-height: 1;
+        -webkit-font-smoothing: antialiased;
+    }
 
-   
-
-    /* [일반 선수] 파검 세로 줄무늬 카드 */
-
+    /* --- 이하 기존 스타일 유지 --- */
     .player-card {
-
-        background: repeating-linear-gradient(
-
-            90deg,
-
-            #003399,
-
-            #003399 20px,
-
-            #1a1a1a 20px,
-
-            #1a1a1a 40px
-
-        );
-
-        padding: 20px;
-
-        border-radius: 15px;
-
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-
-        border-bottom: 4px solid #CC0000;
-
-        text-align: center;
-
-        margin-bottom: 20px;
-
-        color: white; /* 줄무늬 위에서 잘 보이게 흰색 고정 */
-
+        background: repeating-linear-gradient(90deg, #003399, #003399 20px, #1a1a1a 20px, #1a1a1a 40px);
+        padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        border-bottom: 4px solid #CC0000; text-align: center; margin-bottom: 20px; color: white;
     }
-
-
-
-    /* [골키퍼] 노랑+주황 그라데이션 카드 */
-
     .gk-card {
-
         background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
-
-        padding: 20px;
-
-        border-radius: 15px;
-
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-
-        border-bottom: 4px solid #CC0000;
-
-        text-align: center;
-
-        margin-bottom: 20px;
-
-        color: #1a1a1a; /* 밝은 배경이므로 검은색 글자 */
-
+        padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        border-bottom: 4px solid #CC0000; text-align: center; margin-bottom: 20px; color: #1a1a1a;
     }
-
-
-
     .player-number { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
-
     .player-name { font-size: 1.2rem; font-weight: 600; margin: 5px 0; }
-
-   
-
-    /* 포지션 태그 가독성 조정 */
-
     .player-pos {
-
-        font-size: 0.8rem;
-
-        padding: 2px 10px;
-
-        border-radius: 5px;
-
-        background: rgba(255,255,255,0.2);
-
-        color: inherit;
-
-        border: 1px solid rgba(255,255,255,0.3);
-
+        font-size: 0.8rem; padding: 2px 10px; border-radius: 5px;
+        background: rgba(255,255,255,0.2); color: inherit; border: 1px solid rgba(255,255,255,0.3);
     }
-
-
-
-    /* TOP 3 카드 스타일 유지 */
-
-    [data-testid="stMetric"] {
-
-        padding: 15px !important;
-
-        border-radius: 15px !important;
-
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-
-    }
-
-    div[data-testid="stHorizontalBlock"] > div:nth-child(1) [data-testid="stMetric"] { background: linear-gradient(135deg, #FFD700 0%, #FFB900 100%) !important; }
-
-    div[data-testid="stHorizontalBlock"] > div:nth-child(2) [data-testid="stMetric"] { background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%) !important; }
-
-    div[data-testid="stHorizontalBlock"] > div:nth-child(3) [data-testid="stMetric"] { background: linear-gradient(135deg, #D2B48C 0%, #A0522D 100%) !important; }
-
-    [data-testid="stMetricLabel"], [data-testid="stMetricValue"], [data-testid="stMetricDelta"] { color: #1a1a1a !important; font-weight: 700 !important; }
-
-
-
-    .logo-img {
-
-        filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
-
-        background-color: rgba(255, 255, 255, 0.05);
-
-        border-radius: 10px;
-
-    }
-
     </style>
-
     """, unsafe_allow_html=True)
 
 
@@ -238,11 +171,8 @@ df_all = load_data()
 
 # 5. 내비게이션
 
-menu = st.sidebar.radio("📋 MENU", ["🏠 홈 (MATCHDAY)", "🏃 선수단 명단", "📊 성적 분석"])
 
-
-
-if menu == "🏠 홈 (MATCHDAY)":
+if menu == "🏠 홈 (MATCHDAY)": 
     st.markdown("<h2 style='font-weight:700; color:#1a1a1a;'>STADIUM NEWS</h2>", unsafe_allow_html=True)
     sched = df_all['schedule']
     if not sched.empty:
@@ -335,7 +265,7 @@ elif menu == "📊 성적 분석":
     # 상단 탭 구성 (월간 요약 vs 경기별 상세)
     tab1, tab2 = st.tabs(["📅 월간 평균 리포트", "🏟️ 경기별 상세 평점"])
 
-    month = st.sidebar.selectbox("📅 분석 기간 선택", ["5월", "4월", "3월"])
+    month = st.selectbox("📅 분석 기간 선택", ["5월", "4월", "3월"])
     m_key = {"5월": "m5", "4월": "m4", "3월": "m3"}[month]
     col_name = f"{month} 평균평점"
     
