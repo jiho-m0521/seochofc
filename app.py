@@ -25,34 +25,6 @@ def get_base64_image(image_path):
 logo_b64 = get_base64_image("image_4ba137.png")
 st.set_page_config(page_title="2026 서초중 축구부", page_icon="⚽", layout="wide")
 
-# --- [상단 네비바] ---
-query_params = st.query_params
-menu_key = query_params.get("menu", ["home"])[0] if query_params else "home"
-if menu_key not in ["home", "roster", "report"]:
-    menu_key = "home"
-
-menu = "🏠 홈 (MATCHDAY)"
-if menu_key == "roster":
-    menu = "🏃 선수단 명단"
-elif menu_key == "report":
-    menu = "📊 성적 분석"
-
-nav_html = f"""
-    <style>
-    .top-navbar {{ display: flex; justify-content: center; gap: 16px; padding: 16px 0; background: #003399; position: sticky; top: 0; z-index: 999; box-shadow: 0 3px 12px rgba(0,0,0,0.12); margin-bottom: 24px; }}
-    .top-navbar a {{ color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 999px; font-size: 1rem; font-weight: 700; transition: all 0.18s ease; border: 1px solid transparent; }}
-    .top-navbar a:hover {{ background: rgba(255,255,255,0.14); }}
-    .top-navbar a.active {{ background: #ffffff; color: #003399; border-color: rgba(255,255,255,0.4); }}
-    </style>
-    <div class="top-navbar">
-        <a class="{'active' if menu_key == 'home' else ''}" href="?menu=home">🏠 홈 (MATCHDAY)</a>
-        <a class="{'active' if menu_key == 'roster' else ''}" href="?menu=roster">🏃 선수단 명단</a>
-        <a class="{'active' if menu_key == 'report' else ''}" href="?menu=report">📊 성적 분석</a>
-    </div>
-"""
-
-st.markdown(nav_html, unsafe_allow_html=True)
-
 # --- [신규 추가] 상단 헤더 (로고 및 타이틀) ---
 header_logo_html = f'data:image/png;base64,{logo_b64}' if logo_b64 else "https://cdn-icons-png.flaticon.com/512/53/53283.png"
 
@@ -60,7 +32,7 @@ st.markdown(f"""
     <div style="display: flex; align-items: center; gap: 20px; padding: 10px 0px 30px 0px; border-bottom: 1px solid #eee; margin-bottom: 40px;">
         <img src="{header_logo_html}" style="width: 70px; height: 70px; object-fit: contain;">
         <div>
-            <h1 style="margin: 0; font-size: 2.2rem; font-weight: 900; color: #1a1a1a; letter-spacing: -1px;">
+            <h1 style="margin: 0; font-size: 2.2rem; font-weight: 900; color: inherit; letter-spacing: -1px;">
                 SEOCHO <span style="color: #003399;">MIDDLE SCHOOL</span>
             </h1>
             <p style="margin: 0; color: #888; font-weight: 500; font-size: 1rem; letter-spacing: 2px;">
@@ -73,48 +45,276 @@ st.markdown(f"""
 # 2. 로고 처리를 위한 함수
 
 
-
-
-
-# 3. 전체 스타일 커스텀 (수정 버전)
 st.markdown("""
     <style>
-    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-
-    /* 1. 기본 폰트 설정 (아이콘 폰트 제외) */
-    :not(i):not(.material-icons):not([class*="lucide"]) {
+    /* 전체 텍스트 기본 설정 */
+    html, body, [data-testid="stWidgetLabel"] p {
         font-family: 'Pretendard', sans-serif !important;
     }
 
-    /* 2. 스트림릿 내부 아이콘 클래스 강제 복구 */
-    .st-emotion-cache-16ids0d, .st-emotion-cache-15494f6, [data-testid="stIcon"] {
-        font-family: "lucide-icons" !important;
-        font-style: normal;
-        font-weight: normal;
-        font-variant: normal;
-        text-transform: none;
-        line-height: 1;
-        -webkit-font-smoothing: antialiased;
+    /* 카드 베이스: 다크/라이트 공용 */
+    .report-card {
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+        background: rgba(128, 128, 128, 0.08); /* 반투명 배경 */
+        padding: 15px 25px; 
+        border-radius: 12px; 
+        margin-bottom: 10px; 
+        border: 1px solid rgba(128, 128, 128, 0.1);
+        transition: transform 0.2s ease;
     }
 
-    /* --- 이하 기존 스타일 유지 --- */
-    .player-card {
-        background: repeating-linear-gradient(90deg, #003399, #003399 20px, #1a1a1a 20px, #1a1a1a 40px);
-        padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        border-bottom: 4px solid #CC0000; text-align: center; margin-bottom: 20px; color: white;
+    /* 타임라인 스타일 */
+    .timeline-container {
+        position: relative;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px 0;
     }
-    .gk-card {
-        background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
-        padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        border-bottom: 4px solid #CC0000; text-align: center; margin-bottom: 20px; color: #1a1a1a;
+    .timeline-line {
+        position: absolute;
+        left: 50%;
+        width: 2px;
+        background: #e0e0e0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-50%);
     }
-    .player-number { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
-    .player-name { font-size: 1.2rem; font-weight: 600; margin: 5px 0; }
-    .player-pos {
-        font-size: 0.8rem; padding: 2px 10px; border-radius: 5px;
-        background: rgba(255,255,255,0.2); color: inherit; border: 1px solid rgba(255,255,255,0.3);
+    .timeline-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        width: 100%;
+        position: relative;
+    }
+    .timeline-content {
+        width: 42%;
+        padding: 12px 15px;
+        border-radius: 10px;
+        background: #ffffff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .timeline-center {
+        width: 10%;
+        text-align: center;
+        z-index: 2;
+    }
+    .timeline-time-badge {
+        background: #003399;
+        color: white;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        line-height: 35px;
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    /* 글자색 강제 해제: 시스템 테마를 따라가도록 */
+    .dynamic-text {
+        color: inherit !important;
+    }
+    
+    .sub-text {
+        color: #888888 !important; /* 중간 회색은 양쪽 모드에서 다 잘 보임 */
     }
     </style>
+""", unsafe_allow_html=True)
+
+
+# 3. 전체 스타일 커스텀 (줄무늬 및 키퍼 색상 추가)
+
+st.markdown("""
+
+    <style>
+
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+   
+
+    * { font-family: 'Pretendard', sans-serif !important; }
+
+   
+
+    /* [일반 선수] 파검 세로 줄무늬 카드 */
+
+    .player-card {
+
+        background: repeating-linear-gradient(
+
+            90deg,
+
+            #003399,
+
+            #003399 20px,
+
+            #1a1a1a 20px,
+
+            #1a1a1a 40px
+
+        );
+
+        padding: 20px;
+
+        border-radius: 15px;
+
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+
+        border-bottom: 4px solid #CC0000;
+
+        text-align: center;
+
+        margin-bottom: 20px;
+
+        color: white; /* 줄무늬 위에서 잘 보이게 흰색 고정 */
+
+    }
+
+    :root {
+    --text-color: rgba(255, 255, 255, 0.9); /* 기본값 (다크모드 대비) */
+    }
+    
+    .player-name, .player-number {
+    /* 고정색 대신 상속(inherit)이나 변수 사용 */
+    color: inherit !important; 
+    }
+            
+    .ranking-card-name {
+    /* 라이트모드에선 검정, 다크모드에선 흰색으로 자동 전환되는 변수 */
+    color: var(--text-color);
+    }
+
+    /* [골키퍼] 노랑+주황 그라데이션 카드 */
+
+    .gk-card {
+
+        background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
+
+        padding: 20px;
+
+        border-radius: 15px;
+
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+
+        border-bottom: 4px solid #CC0000;
+
+        text-align: center;
+
+        margin-bottom: 20px;
+
+        color: #1a1a1a; /* 밝은 배경이므로 검은색 글자 */
+
+    }
+
+    /* [관리팀] 회색 그라데이션 카드 */
+
+    .management-card {
+
+        background: linear-gradient(135deg, #666666 0%, #999999 100%);
+
+        padding: 20px;
+
+        border-radius: 15px;
+
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+
+        border-bottom: 4px solid #CC0000;
+
+        text-align: center;
+
+        margin-bottom: 20px;
+
+        color: white; /* 어두운 배경이므로 흰색 글자 */
+
+    }
+
+    /* [일정] 녹색 그라데이션 카드 */
+
+    .schedule-card {
+
+        background: linear-gradient(135deg, #228B22 0%, #32CD32 100%);
+
+        padding: 20px;
+
+        border-radius: 15px;
+
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+
+        border-bottom: 4px solid #CC0000;
+
+        text-align: center;
+
+        margin-bottom: 20px;
+
+        color: white; /* 어두운 배경이므로 흰색 글자 */
+
+    }
+
+
+
+    .player-number { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
+
+    .player-name { font-size: 1.2rem; font-weight: 600; margin: 5px 0; }
+
+   
+
+    /* 포지션 태그 가독성 조정 */
+
+    .player-pos {
+
+        font-size: 0.8rem;
+
+        padding: 2px 10px;
+
+        border-radius: 5px;
+
+        background: rgba(255,255,255,0.2);
+
+        color: inherit;
+
+        border: 1px solid rgba(255,255,255,0.3);
+
+    }
+
+
+
+    /* TOP 3 카드 스타일 유지 */
+
+    [data-testid="stMetric"] {
+
+        padding: 15px !important;
+
+        border-radius: 15px !important;
+
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+
+    }
+
+    div[data-testid="stHorizontalBlock"] > div:nth-child(1) [data-testid="stMetric"] { background: linear-gradient(135deg, #FFD700 0%, #FFB900 100%) !important; }
+
+    div[data-testid="stHorizontalBlock"] > div:nth-child(2) [data-testid="stMetric"] { background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%) !important; }
+
+    div[data-testid="stHorizontalBlock"] > div:nth-child(3) [data-testid="stMetric"] { background: linear-gradient(135deg, #D2B48C 0%, #A0522D 100%) !important; }
+
+    [data-testid="stMetricLabel"], [data-testid="stMetricValue"], [data-testid="stMetricDelta"] { color: #1a1a1a !important; font-weight: 700 !important; }
+
+
+
+    .logo-img {
+
+        filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+
+        background-color: rgba(255, 255, 255, 0.05);
+
+        border-radius: 10px;
+
+    }
+
+    </style>
+
     """, unsafe_allow_html=True)
 
 
@@ -137,6 +337,12 @@ def load_data():
             data[k] = df
         else:
             data[k] = pd.DataFrame()
+
+    # Management 데이터 추가
+    data['management'] = pd.DataFrame({
+        '이름': ['장순현 선생님', '신예준'],
+        '역할': ['체육안전부', '매니저 (3학년 1반)']
+    })
 
     # [2] 구글 시트 로드 (한글 인코딩 문제 해결)
     SHEET_ID = "1n1a2Pceu9zMXTgVdIE2sKLh3f7_3I_EjgUQaa0Wua84" 
@@ -169,11 +375,198 @@ def load_data():
 
 df_all = load_data()
 
-# 5. 내비게이션
+# 경기 세부 데이터 (필요 시 파일로 분리 가능)
+match_details = {
+    '서초중 vs 방배중': {
+        'formation': '4-3-3',
+        'lineup': {
+            'GK': ['주상현'],
+            'DF': ['김시우', '민지호', '박준환', '고은성'],
+            'MF': ['임종헌', '노하율', '조영규'],
+            'FW': ['목정민', '김진우', '황지석']
+        },
+        'bench': ['김도훈', '김형준', '전현준', '정태공', '양승민'],
+        'stats': {
+            '서초중': {'shots': 12, 'passes': 245, 'possession': 55},
+            '방배중': {'shots': 8, 'passes': 198, 'possession': 45}
+        },
+        'events': [
+            {'time': '15\'', 'event': '⚽ 골 - 노하율 (서초중)', 'type': 'goal'},
+            {'time': '30\'', 'event': '🔄 교체 - 김진우 OUT, 황지석 IN (서초중)', 'type': 'sub'},
+            {'time': '45\'', 'event': '🟨 옐로카드 - 김시우 (서초중)', 'type': 'card'},
+            {'time': '60\'', 'event': '⚽ 골 - 방배중 선수', 'type': 'goal'},
+            {'time': '75\'', 'event': '🔄 교체 - 민지호 OUT, 김형준 IN (서초중)', 'type': 'sub'}
+        ]
+    },
+    '서초중 vs 이수중': {
+        'formation': '4-4-2',
+        'lineup': {
+            'GK': ['김도훈'],
+            'DF': ['김형준', '전현준', '정태공', '양승민'],
+            'MF': ['이기윤', '이새누엘', '유용준', '조하윤'],
+            'FW': ['임종헌', '노하율']
+        },
+        'bench': ['주상현', '김시우', '민지호', '박준환', '고은성'],
+        'stats': {
+            '서초중': {'shots': 10, 'passes': 220, 'possession': 50},
+            '이수중': {'shots': 9, 'passes': 215, 'possession': 50}
+        },
+        'events': [
+            {'time': '10\'', 'event': '🟨 옐로카드 - 이수중 선수', 'type': 'card'},
+            {'time': '25\'', 'event': '⚽ 골 - 임종헌 (서초중)', 'type': 'goal'},
+            {'time': '50\'', 'event': '🔄 교체 - 유용준 OUT, 조영규 IN (서초중)', 'type': 'sub'},
+            {'time': '70\'', 'event': '⚽ 골 - 이수중 선수', 'type': 'goal'},
+            {'time': '85\'', 'event': '🔄 교체 - 노하율 OUT, 목정민 IN (서초중)', 'type': 'sub'}
+        ]
+    },
+    '서초중 vs 내곡중': {
+        'formation': '3-5-2',
+        'lineup': {
+            'GK': ['주상현'],
+            'DF': ['김시우', '민지호', '박준환'],
+            'MF': ['고은성', '임종헌', '노하율', '조영규', '김진우'],
+            'FW': ['황지석', '목정민']
+        },
+        'bench': ['김도훈', '김형준', '전현준', '정태공', '양승민'],
+        'stats': {
+            '서초중': {'shots': 15, 'passes': 260, 'possession': 60},
+            '내곡중': {'shots': 7, 'passes': 180, 'possession': 40}
+        },
+        'events': [
+            {'time': '5\'', 'event': '⚽ 골 - 황지석 (서초중)', 'type': 'goal'},
+            {'time': '20\'', 'event': '🔄 교체 - 김진우 OUT, 전현준 IN (서초중)', 'type': 'sub'},
+            {'time': '40\'', 'event': '🟨 옐로카드 - 내곡중 선수', 'type': 'card'},
+            {'time': '65\'', 'event': '⚽ 골 - 목정민 (서초중)', 'type': 'goal'},
+            {'time': '80\'', 'event': '🔄 교체 - 조영규 OUT, 이기윤 IN (서초중)', 'type': 'sub'}
+        ]
+    },
+    '서초중 vs 언남중': {
+        'formation': '4-2-3-1',
+        'lineup': {
+            'GK': ['김도훈'],
+            'DF': ['김형준', '전현준', '정태공', '양승민'],
+            'MF': ['이기윤', '이새누엘', '유용준'],
+            'FW': ['조하윤']
+        },
+        'bench': ['주상현', '김시우', '민지호', '박준환', '고은성'],
+        'stats': {
+            '서초중': {'shots': 8, 'passes': 200, 'possession': 48},
+            '언남중': {'shots': 11, 'passes': 230, 'possession': 52}
+        },
+        'events': [
+            {'time': '12\'', 'event': '🟨 옐로카드 - 양승민 (서초중)', 'type': 'card'},
+            {'time': '35\'', 'event': '⚽ 골 - 언남중 선수', 'type': 'goal'},
+            {'time': '55\'', 'event': '🔄 교체 - 이새누엘 OUT, 임종헌 IN (서초중)', 'type': 'sub'},
+            {'time': '70\'', 'event': '⚽ 골 - 조하윤 (서초중)', 'type': 'goal'},
+            {'time': '90\'', 'event': '🔄 교체 - 유용준 OUT, 노하율 IN (서초중)', 'type': 'sub'}
+        ]
+    }
+}
+
+# --- [5. 내비게이션: 프로축구 공식 사이트 스타일] ---
+# 세션 상태 초기화 (현재 선택된 메뉴 저장)
+if 'menu_option' not in st.session_state:
+    st.session_state.menu_option = "🏠 홈 (MATCHDAY)"
+if 'selected_match' not in st.session_state:
+    st.session_state.selected_match = None
+
+# 상단 내비게이션 바 디자인
+st.markdown("""
+    <style>
+    /* 내비게이션 컨테이너 */
+    .nav-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+    /* 버튼 공통 스타일 */
+    .stButton > button {
+        width: 100%;
+        border-radius: 50px; /* 알약 모양 */
+        border: 1px solid #eee;
+        background-color: white;
+        color: #555;
+        font-weight: 600;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    /* 마우스 호버 효과 */
+    .stButton > button:hover {
+        border-color: #003399;
+        color: #003399;
+        background-color: #f8faff;
+    }
+    /* 활성화된 버튼 스타일 (Streamlit 기본 primary 버튼 활용) */
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #003399 0%, #001a4d 100%) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(0,51,153,0.3) !important;
+    }
+    /* NEXT MATCH 카드 클릭 버튼에 텍스트 입히기 */
+    button[key="next_match_click"] {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    
+    /* 텍스트 스타일 추가 */
+    color: rgba(255, 255, 255, 0.7) !important; /* 글자색 (약간 투명한 흰색) */
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: flex-end !important; /* 텍스트를 아래쪽으로 */
+    justify-content: center !important; /* 텍스트를 가운데로 */
+    padding-bottom: 15px !important; /* 바닥에서 살짝 띄움 */
+    transition: all 0.3s ease !important;
+}
+
+    /* 마우스 올렸을 때 텍스트 강조 */
+    button[key="next_match_click"]:hover {
+        color: #FFD700 !important; /* 금색으로 변경 */
+        background: rgba(255, 255, 255, 0.05) !important; /* 아주 살짝 밝아짐 */
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# 5개의 컬럼으로 메뉴 구성
+c1, c2, c3, c4, c5 = st.columns(5)
+with c1:
+    if st.button("🏠 MATCHDAY", use_container_width=True, 
+                 type="primary" if st.session_state.menu_option == "🏠 홈 (MATCHDAY)" else "secondary"):
+        st.session_state.menu_option = "🏠 홈 (MATCHDAY)"
+        st.rerun()
+with c2:
+    if st.button("🏃 SQUAD", use_container_width=True, 
+                 type="primary" if st.session_state.menu_option == "🏃 선수단 명단" else "secondary"):
+        st.session_state.menu_option = "🏃 선수단 명단"
+        st.rerun()
+with c3:
+    if st.button("📅 SCHEDULE", use_container_width=True, 
+                 type="primary" if st.session_state.menu_option == "📅 SCHEDULE" else "secondary"):
+        st.session_state.menu_option = "📅 SCHEDULE"
+        st.rerun()
+
+with c4:
+    if st.button("📊 ANALYSIS", use_container_width=True, 
+                 type="primary" if st.session_state.menu_option == "📊 성적 분석" else "secondary"):
+        st.session_state.menu_option = "📊 성적 분석"
+        st.rerun()
+
+menu = st.session_state.menu_option
+st.markdown("<br>", unsafe_allow_html=True)
 
 
-if menu == "🏠 홈 (MATCHDAY)": 
-    st.markdown("<h2 style='font-weight:700; color:#1a1a1a;'>STADIUM NEWS</h2>", unsafe_allow_html=True)
+
+if menu == "🏠 홈 (MATCHDAY)":
+    st.markdown("<h2 style='font-weight:700; color:inherit;'>STADIUM NEWS</h2>", unsafe_allow_html=True)
     sched = df_all['schedule']
     if not sched.empty:
         next_m = sched.dropna(subset=['상대']).iloc[0]
@@ -190,26 +583,36 @@ if menu == "🏠 홈 (MATCHDAY)":
         opp_logo_b64 = get_base64_image(f"{opp}.png")
         opp_logo_html = f'data:image/png;base64,{opp_logo_b64}' if opp_logo_b64 else "https://cdn-icons-png.flaticon.com/512/1163/1163063.png"
 
-        st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); padding: 40px 20px; border-radius: 25px; color: white; text-align: center;">
-                <p style="letter-spacing: 5px; color: #ff4b4b; font-weight: 600; font-size:0.9rem; margin-bottom:20px;">NEXT MATCH</p>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 30px; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <img src="{logo_html}" style="width:60px; height:60px; object-fit:contain;">
-                        <h1 style="font-size: 2.5rem; font-weight: 800; margin:0; color:white;">서초중학교</h1>
-                    </div>
-                    <div style="font-size: 1.5rem; font-weight: 300; color: #888;">VS</div>
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <h1 style="font-size: 2.5rem; font-weight: 800; color: #bbb; margin:0;">{opp}</h1>
-                        <img src="{opp_logo_html}" style="width:60px; height:60px; object-fit:contain;">
+        # 클릭 가능한 카드
+        with st.container():
+            st.markdown(f"""
+                <div style="position: relative;">
+                    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); padding: 40px 20px; border-radius: 25px; color: white; text-align: center;">
+                        <p style="letter-spacing: 5px; color: #ff4b4b; font-weight: 600; font-size:0.9rem; margin-bottom:20px;">NEXT MATCH</p>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 30px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <img src="{logo_html}" style="width:60px; height:60px; object-fit:contain;">
+                                <h1 style="font-size: 2.5rem; font-weight: 800; margin:0; color:white;">서초중학교</h1>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: 300; color: #888;">VS</div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <h1 style="font-size: 2.5rem; font-weight: 800; color: #bbb; margin:0;">{opp}</h1>
+                                <img src="{opp_logo_html}" style="width:60px; height:60px; object-fit:contain;">
+                            </div>
+                        </div>
+                        <div style="margin-top: 30px; display: flex; justify-content: center; gap: 15px;">
+                            <span style="background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 10px;">🗓️ {formatted_date} {next_m.get('시간', '')}</span>
+                            <span style="background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 10px;">📍 {next_m.get('장소', '')}</span>
+                        </div>
                     </div>
                 </div>
-                <div style="margin-top: 30px; display: flex; justify-content: center; gap: 15px;">
-                    <span style="background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 10px;">🗓️ {formatted_date} {next_m.get('시간', '')}</span>
-                    <span style="background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 10px;">📍 {next_m.get('장소', '')}</span>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        if st.button("상세 정보 확인 🔍", key="next_match_click", use_container_width=True):
+            # 경기 데이터가 있다면 세션에 저장 (next_match 변수가 정의되어 있어야 함)
+            if 'next_match' in locals():
+                st.session_state.selected_match = next_match.to_dict() # type: ignore
+            st.session_state.menu_option = "📋 DETAIL"
+            st.rerun()
 
     # --- [2. 5월 우수 선수 TOP 3 출력 강화] --- 
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -237,9 +640,82 @@ if menu == "🏠 홈 (MATCHDAY)":
         st.warning("5월 평점 데이터를 불러올 수 없습니다.")
 
 
+# --- [일정 페이지] ---
+elif menu == "📅 SCHEDULE":
+    st.markdown("<h1 style='font-weight:800; margin-bottom:30px;'>MATCH SCHEDULE</h1>", unsafe_allow_html=True)
+    df_schedule = df_all['schedule']
+    
+    if not df_schedule.empty:
+        cols = st.columns(2)
+        for i, (idx, match) in enumerate(df_schedule.iterrows()):
+            with cols[i % 2]:
+                # 데이터 추출
+                opp = match['상대'].replace('vs ', '').strip() if '상대' in match else 'TBD'
+                raw_date = match.get('날짜', 'TBD')
+                try:
+                    formatted_date = pd.to_datetime(f"2026 {raw_date}", format="%Y %b %d").strftime("2026년 %m월 %d일")
+                except:
+                    formatted_date = raw_date
+                
+                time = match.get('시간', 'TBD')
+                venue = match.get('장소', 'TBD')
+                stage = match.get('스테이지', 'TBD')
+                
+                # --- [수정 부분] 결과값 처리 ---
+                result = match.get('결과', '')
+                # 결과가 nan이거나 비어있으면 '킥오프 전'으로 표시
+                if pd.isna(result) or str(result).lower() == 'nan' or not str(result).strip():
+                    display_result = "킥오프 전"
+                    result_color = "#FF0000" # 대기 중인 느낌의 빨간색
+                else:
+                    display_result = f"결과: {result}"
+                    result_color = "#000000" # 결과가 있을 땐 강조색(검정)
+
+                with st.container():
+                    # 1. 디자인 카드
+                    st.markdown(f"""
+                        <div style="position: relative;">
+                            <div class="schedule-card" style="padding-bottom: 60px; margin-bottom: 0px;">
+                                <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 10px;">{opp}</div>
+                                <div style="font-size: 0.9rem; margin-bottom: 5px;">📅 {formatted_date} {time}</div>
+                                <div style="font-size: 0.9rem; margin-bottom: 5px;">📍 {venue}</div>
+                                <div style="font-size: 0.8rem; margin-bottom: 5px;">🏆 {stage}</div>
+                                <div style="font-size: 0.8rem; color: {result_color}; font-weight: 600;">{display_result}</div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # 2. 버튼 위에 텍스트 새기기
+                    if st.button("상세 정보 확인 🔍", key=f"sched_btn_{i}", use_container_width=True):
+                        st.session_state.selected_match = match.to_dict()
+                        st.session_state.menu_option = "📋 DETAIL"
+                        st.rerun()
+    else:
+        st.info("일정 데이터를 불러올 수 없습니다.")
+
+
 # --- [선수단 명단 페이지 수정됨] ---
 elif menu == "🏃 선수단 명단":
     st.markdown("<h1 style='font-weight:800; margin-bottom:30px;'>SQUAD ROSTER</h1>", unsafe_allow_html=True)
+    
+    # Management 섹션
+    st.markdown("<h2 style='font-weight:700; margin-bottom:20px;'>TEAM MANAGEMENT</h2>", unsafe_allow_html=True)
+    df_management = df_all['management']
+    if not df_management.empty:
+        cols = st.columns(2)  # Management는 2명이라 2칼럼
+        for i, (idx, member) in enumerate(df_management.iterrows()):
+            with cols[i % 2]:
+                st.markdown(f"""
+                    <div class="management-card">
+                        <div class="player-name">{member['이름']}</div>
+                        <span class="player-pos">{member['역할']}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Roster 섹션
+    st.markdown("<h2 style='font-weight:700; margin-bottom:20px;'>TEAM ROSTER</h2>", unsafe_allow_html=True)
     df_roster = df_all['roster']
     if not df_roster.empty:
         cols = st.columns(4)
@@ -258,21 +734,143 @@ elif menu == "🏃 선수단 명단":
                 """, unsafe_allow_html=True)
 
 
+# --- [상세 페이지] ---
+elif menu == "📋 DETAIL":
+    # 선택된 경기 데이터 확인
+    match = st.session_state.get('selected_match', None)
+    
+    if match:
+        opp = match['상대'].replace('vs ', '').strip()
+        # 뒤로가기 버튼
+        if st.button("⬅ 일정 목록으로 돌아가기"):
+            st.session_state.menu_option = "📅 SCHEDULE"
+            st.rerun()
+
+        # 1. 경기 요약 헤더 카드
+        result_text = match.get('결과', '')
+        status_text = "킥오프 전" if pd.isna(result_text) or str(result_text).lower() == 'nan' or not str(result_text).strip() else f"결과: {result_text}"
+        
+        st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #003399 0%, #001a4d 100%); 
+                        padding: 30px; border-radius: 15px; color: white; margin-bottom: 30px; text-align: center;">
+                <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 10px;">{match.get('스테이지', 'MATCH DETAILS')}</div>
+                <div style="font-size: 2rem; font-weight: 800; margin-bottom: 15px;">서초 FC vs {opp}</div>
+                <div style="font-size: 1.1rem; font-weight: 600; color: #FFD700;">{status_text}</div>
+                <div style="margin-top: 15px; font-size: 0.85rem; opacity: 0.9;">
+                    📅 {match.get('날짜', '')} {match.get('시간', '')} | 📍 {match.get('장소', '')}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # 2. 상세 정보 탭 구성 (라인업 / 경기 기록)
+        tab1, tab2, tab3 = st.tabs(["🏃 LINEUP", "📊 STATS", "⏱️ TIMELINE"])
+
+        with tab1:
+            st.subheader("선발 명단")
+            # 라인업 데이터가 문자열(예: "김철수, 이영희...")일 경우 리스트로 변환
+            lineup_raw = match.get('라인업', '정보 없음')
+            if lineup_raw != '정보 없음':
+                players = [p.strip() for p in str(lineup_raw).split(',')]
+                
+                # 선수들을 칩(Chip) 형태로 나열
+                lineup_html = "".join([f'<span style="background:#f0f2f6; padding:5px 12px; border-radius:15px; margin:5px; display:inline-block; font-weight:600; color:#003399;">{p}</span>' for p in players])
+                st.markdown(lineup_html, unsafe_allow_html=True)
+            else:
+                st.info("등록된 라인업 정보가 없습니다.")
+
+        with tab2:
+            st.subheader("경기 통계")
+            # 주요 스탯 표시 (득점자, 점유율 등 데이터가 있을 경우)
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("득점", result_text.split(':')[0] if ':' in str(result_text) else "-")
+            with col2:
+                st.metric("실점", result_text.split(':')[1] if ':' in str(result_text) else "-")
+            with col3:
+                st.metric("장소", match.get('장소', '-'))
+
+        with tab3:
+            st.subheader("Match Timeline")
+            events = [
+                # (12, 'home', '⚽ GOAL', '김철수'),
+                # (35, 'away', '🟨 YELLOW', '상대선수1'),
+                # (45, 'home', '⚽ GOAL', '이영희'),
+                # (70, 'home', '🔄 SUB', '박지성 IN'),
+                # (88, 'away', '⚽ GOAL', '상대선수2')
+            ]
+            
+            # 시간순 정렬
+            events.sort(key=lambda x: x[0])
+
+            st.markdown('<div class="timeline-container"><div class="timeline-line"></div>', unsafe_allow_html=True)
+            
+            for time, team, event, player in events:
+                if team == 'home':
+                    # 우리 팀 이벤트 (왼쪽)
+                    st.markdown(f"""
+                        <div class="timeline-item">
+                            <div class="timeline-content" style="text-align: right; border-right: 4px solid #003399;">
+                                <div style="font-weight: 700; color: #28a745;">{event}</div>
+                                <div style="font-size: 0.9rem; color: #333;">{player}</div>
+                            </div>
+                            <div class="timeline-center">
+                                <span class="timeline-time-badge">{time}'</span>
+                            </div>
+                            <div style="width: 40%;"></div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    # 상대 팀 이벤트 (오른쪽)
+                    st.markdown(f"""
+                        <div class="timeline-item">
+                            <div style="width: 40%;"></div>
+                            <div class="timeline-center">
+                                <span class="timeline-time-badge" style="background: #ff4b4b;">{time}'</span>
+                            </div>
+                            <div class="timeline-content" style="text-align: left; border-left: 4px solid #ff4b4b;">
+                                <div style="font-weight: 700; color: #ff4b4b;">{event}</div>
+                                <div style="font-size: 0.9rem; color: #333;">{player}</div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # 비고(Notes) 섹션
+            notes = match.get('비고', '-')
+            if notes and str(notes) != 'nan':
+                st.write("---")
+                st.markdown(f"**📝 매치 리포트**")
+                st.info(notes)
+
+    else:
+        st.warning("경기를 선택해주세요. 'SCHEDULE' 메뉴에서 경기를 클릭하면 상세 내용을 볼 수 있습니다.")
+        if st.button("일정 확인하러 가기"):
+            st.session_state.menu_option = "📅 SCHEDULE"
+            st.rerun()
+
+
 # --- 평점 리포트 ---
 elif menu == "📊 성적 분석":
-    st.markdown("<h1 style='font-weight:800; color:#1a1a1a;'>PERFORMANCE REPORT</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-weight:800; color:inherit;'>PERFORMANCE REPORT</h1>", unsafe_allow_html=True)
     
-    # 상단 탭 구성 (월간 요약 vs 경기별 상세)
-    tab1, tab2 = st.tabs(["📅 월간 평균 리포트", "🏟️ 경기별 상세 평점"])
-
-    month = st.selectbox("📅 분석 기간 선택", ["5월", "4월", "3월"])
+    # [수정] 드롭다운을 분석 페이지 최상단에 배치 (디자인 일관성)
+    # columns를 활용해 드롭다운 너비를 조절하면 더 깔끔합니다.
+    sel_col1, sel_col2 = st.columns([1, 2])
+    with sel_col1:
+        month = st.selectbox("📅 분석 기간 선택", ["5월", "4월", "3월"], label_visibility="visible")
+    
+    # 데이터 매칭용 키 설정
     m_key = {"5월": "m5", "4월": "m4", "3월": "m3"}[month]
     col_name = f"{month} 평균평점"
     
     df_roster = df_all['roster'].copy()
     df_m = df_all[m_key].copy()
 
-    # --- TAB 1: 기존 월간 평균 리스트 (기존 디자인 유지) ---
+    # 상단 탭 구성 (월간 요약 vs 경기별 상세)
+    tab1, tab2 = st.tabs(["📅 월간 평균 리포트", "🏟️ 경기별 상세 평점"])
+
+    # --- TAB 1: 월간 평균 리스트 ---
     with tab1:
         if not df_roster.empty:
             if not df_m.empty and col_name in df_m.columns:
@@ -286,9 +884,10 @@ elif menu == "📊 성적 분석":
             df_final = df_final.sort_values(col_name, ascending=False, na_position='last')
             
             st.markdown(f"### 📋 {month} 전체 스쿼드 시즌 평점")
-            # ... (기존에 제공해주신 리스트 렌더링 코드와 동일)
+            
             for i, (idx, row) in enumerate(df_final.iterrows()):
                 score = row[col_name]
+                # 등급 로직 (A, B, C) 및 HTML 렌더링 부분은 기존 코드와 동일
                 if pd.isna(score) or score == 0: tier, color, score_display = "-", "#888888", "N/A"
                 elif score >= 7.0: tier, color, score_display = "A", "#ff4b4b", f"{score:.2f}"
                 elif score >= 6.5: tier, color, score_display = "B", "#003399", f"{score:.2f}"
