@@ -678,30 +678,7 @@ if menu == "🏠 홈 (MATCHDAY)":
             st.session_state.menu_option = "📅 SCHEDULE"
             st.rerun()
 
-    # --- [2. 5월 우수 선수 TOP 3 출력 강화] --- 
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("<h3 style='font-weight:700;'>🌟 5월의 우수 선수 (TOP 3)</h3>", unsafe_allow_html=True)
-    df5 = df_all['m5'].copy()
-    
-    if not df5.empty and '5월 평균평점' in df5.columns:
-        # 평점 데이터를 확실하게 숫자로 변환 
-        df5['5월 평균평점'] = pd.to_numeric(df5['5월 평균평점'], errors='coerce')
-        top3 = df5.dropna(subset=['5월 평균평점']).nlargest(3, '5월 평균평점')
-        
-        if not top3.empty:
-            cols = st.columns(3)
-            medals = ["🥇 1st", "🥈 2nd", "🥉 3rd"]
-            for i, (idx, row) in enumerate(top3.iterrows()):
-                with cols[i]:
-                    st.metric(
-                        label=f"{medals[i]} - {row['포지션']}", 
-                        value=f"{row['이름']}", 
-                        delta=f"{row['5월 평균평점']:.2f} pts"
-                    )
-        else:
-            st.info("TOP 3를 선정할 평점 데이터가 없습니다.")
-    else:
-        st.warning("5월 평점 데이터를 불러올 수 없습니다.")
+    # 5월 우수 선수 TOP 3 moved to analysis page (protected)
 
 
 # ============================================================================
@@ -1012,6 +989,27 @@ elif menu == "📊 성적 분석":
         st.warning("비밀번호가 올바르지 않습니다.")
         st.stop()
     st.markdown("<h1 style='font-weight:800; color:inherit;'>PERFORMANCE REPORT</h1>", unsafe_allow_html=True)
+    # 5월 우수 선수 TOP 3 (protected)
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-weight:700;'>🌟 5월의 우수 선수 (TOP 3)</h3>", unsafe_allow_html=True)
+    df5 = df_all['m5'].copy()
+    if not df5.empty and '5월 평균평점' in df5.columns:
+        df5['5월 평균평점'] = pd.to_numeric(df5['5월 평균평점'], errors='coerce')
+        top3 = df5.dropna(subset=['5월 평균평점']).nlargest(3, '5월 평균평점')
+        if not top3.empty:
+            cols = st.columns(3)
+            medals = ["🥇 1st", "🥈 2nd", "🥉 3rd"]
+            for i, (idx, row) in enumerate(top3.iterrows()):
+                with cols[i]:
+                    st.metric(
+                        label=f"{medals[i]} - {row['포지션']}",
+                        value=f"{row['이름']}",
+                        delta=f"{row['5월 평균평점']:.2f} pts"
+                    )
+        else:
+            st.info("TOP 3를 선정할 평점 데이터가 없습니다.")
+    else:
+        st.warning("5월 평점 데이터를 불러올 수 없습니다.")
     
     # [수정] 드롭다운을 분석 페이지 최상단에 배치 (디자인 일관성)
     # columns를 활용해 드롭다운 너비를 조절하면 더 깔끔합니다.
