@@ -8,6 +8,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+import forms
+from models import calculate_score
+
 # ============================================================================
 # CONSTANTS AND CONFIGURATION
 # ============================================================================
@@ -737,83 +740,115 @@ elif menu == "📅 SCHEDULE":
 # DATA ENTRY PAGE
 # ============================================================================
 elif menu == "데이터 입력":
-    # Password protection for data input
-    pwd_data = st.text_input("데이터 입력 비밀번호", type="password", key="pwd_data")
-    if pwd_data != "sdata":
-        st.warning("비밀번호가 올바르지 않습니다.")
-        st.stop()
-    st.markdown("<h1 style='font-weight:800; margin-bottom:30px;'>데이터 입력</h1>", unsafe_allow_html=True)
-    
-    st.markdown("""
-        <div style="background: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
-            <p style="margin: 0; color: #555;">경기 상세 정보를 JSON 파일로 저장합니다. 아래 양식을 작성하세요.</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # Match ID 입력
-    match_id = st.text_input("경기 ID (예: match_2026_06_05)", placeholder="match_YYYY_MM_DD 형식 추천")
-    
-    # Score 입력
-    score = st.text_input("결과 (예: 2:1)", placeholder="서초중:상대점수 형식")
-    
-    # Timeline 입력
-    timeline_input = st.text_area("타임라인 (한 줄에 하나씩, 형식: 분 - 내용)",
-                                   placeholder="예:\n15 - 홍길동 선수가 골을 넣었다\n30 - 홍길동 선수가 교체 아웃되었습니다.",
-                                   height=150)
-    
-    # Lineup 입력
-    lineup_input = st.text_area("라인업 (한 줄에 하나씩)",
-                                 placeholder="예:\n주상현\n김시우\n민지호",
-                                 height=150)
-    
-    # Submit 버튼
-    if st.button("💾 저장하기", use_container_width=True, type="primary"):
-        # Validation
-        errors = []
-        if not match_id:
-            errors.append("경기 ID를 입력해주세요.")
-        if not score:
-            errors.append("결과를 입력해주세요.")
-        
-        if errors:
-            for err in errors:
-                st.error(err)
-        else:
-            # Parse timeline
-            timeline = []
-            if timeline_input.strip():
-                for line in timeline_input.strip().split('\n'):
-                    if ' - ' in line:
-                        parts = line.split(' - ', 1)
-                        try:
-                            minute = int(parts[0].strip())
-                            event = parts[1].strip()
-                            timeline.append({'minute': minute, 'event': event})
-                        except ValueError:
-                            st.warning(f"분을 숫자로 변환할 수 없습니다: {line}")
-            
-            # Parse lineup
-            lineup = []
-            if lineup_input.strip():
-                lineup = [p.strip() for p in lineup_input.strip().split('\n') if p.strip()]
-            
-            # Build details dict
-            details = {
-                'score': score,
-                'timeline': timeline,
-                'lineup': lineup
-            }
-            
-            # Save
-            try:
-                save_match_details(match_id, details)
-                st.success(f"✅ {match_id} 데이터가 저장되었습니다!")
-                st.json(details)
-            except Exception as e:
-                st.error(f"저장 중 오류가 발생했습니다: {e}")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.info("데이터는 `data/` 디렉토리에 `<match_id>.json` 파일로 저장됩니다.")
+     # Password protection for data input
+     pwd_data = st.text_input("데이터 입력 비밀번호", type="password", key="pwd_data")
+     if pwd_data != "sdata":
+         st.warning("비밀번호가 올바르지 않습니다.")
+         st.stop()
+     st.markdown("<h1 style='font-weight:800; margin-bottom:30px;'>데이터 입력</h1>", unsafe_allow_html=True)
+     
+     st.markdown("""
+         <div style="background: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+             <p style="margin: 0; color: #555;">경기 상세 정보를 JSON 파일로 저장합니다. 아래 양식을 작성하세요.</p>
+         </div>
+     """, unsafe_allow_html=True)
+     
+     # Match selection dropdown
+     selected_match = forms.match_selector(label="경기 선택", key="match_selector")
+     if selected_match:
+         match_id = selected_match
+     else:
+         match_id = ""
+     
+     # Auto-calculate score checkbox
+     auto_calculate = st.checkbox("타임라인 기반으로 점수 자동 계산", value=True, key="auto_calculate")
+     
+     # Score inputs (disabled if auto_calculate is True)
+     home_score, away_score = forms.score_inputs(
+         label="점수",
+         home_label="서초중",
+         away_label="상대팀",
+         value=(0, 0),
+         disabled=auto_calculate,
+         key="score_inputs"
+     )
+     
+     # Lineup popup
+     lineup = forms.lineup_popup(label="라인업 선택", key="lineup_popup")
+     
+     # Timeline editor
+     timeline = forms.timeline_editor(label="타임라인 이벤트", initial_events=[], key="timeline_editor")
+     
+     # Build details dict
+     details = {
+         'match_id': match_id,
+         'lineup': lineup,
+         'timeline': timeline
+     }
+     
+     # If auto_calculate is False, use manual scores
+     if not auto_calculate:
+         details['home_score'] = home_score
+         details['away_score'] = away_score
+     
+     # Instant save preview
+     forms.instant_save_preview(details, key="preview")
+     
+     # Submit 버튼
+     if st.button("💾 저장하기", use_container_width=True, type="primary"):
+         # Validation
+         errors = []
+         if not match_id:
+             errors.append("경기 ID를 입력해주세요.")
+         if not auto_calculate:
+             if home_score is None or away_score is None:
+                 errors.append("점수를 입력해주세요.")
+         if not lineup:
+             errors.append("최소 한 명의 선수를 선발 라인업으로 선택해주세요.")
+         if not timeline:
+             errors.append("최소 한 개의 타임라인 이벤트를 추가해주세요.")
+         
+         # Validate timeline events
+         for i, event in enumerate(timeline):
+             if event.get('minute', 0) < 0 or event.get('minute', 0) > 120:
+                 errors.append(f"이벤트 {i+1}: 분은 0에서 120 사이여야 합니다.")
+             if event.get('team') not in ['home', 'away']:
+                 errors.append(f"이벤트 {i+1}: 팀은 'home' 또는 'away'여야 합니다.")
+             if event.get('event_type') not in ['골', '페널티골', '경고', '퇴장', '교체', '코너킥', '프리킥', '반칙', '휴식시간']:
+                 errors.append(f"이벤트 {i+1}: 유효하지 않은 이벤트 종류입니다.")
+             # For goal, card events, player is required for home team
+             if event.get('team') == 'home' and event.get('event_type') in ['골', '페널티골', '경고', '퇴장']:
+                 if not event.get('player'):
+                     errors.append(f"이벤트 {i+1}: 홈 팀의 골/카드 이벤트에는 선수가 필요합니다.")
+             # For card events, card_type is required
+             if event.get('event_type') in ['경고', '퇴장']:
+                 if not event.get('card_type'):
+                     errors.append(f"이벤트 {i+1}: 카드 이벤트에는 카드 종류가 필요합니다.")
+         
+         if errors:
+             for err in errors:
+                 st.error(err)
+         else:
+             # Calculate scores if auto_calculate is True
+             if auto_calculate:
+                 home_score, away_score = calculate_score(timeline)
+                 details['home_score'] = home_score
+                 details['away_score'] = away_score
+             
+             # Save and store last saved match id and key for immediate display
+             try:
+                 save_match_details(match_id, details)
+                 st.session_state['last_match_id'] = match_id
+                 st.session_state['last_match_key'] = match_id  # assume match_id matches the detail lookup key
+                 st.session_state['last_match_details'] = details
+                 st.success(f"✅ {match_id} 데이터가 저장되었습니다!")
+                 # Optionally, show the saved data
+                 st.json(details)
+             except Exception as e:
+                 st.error(f"저장 중 오류가 발생했습니다: {e}")
+     
+     st.markdown("<br>", unsafe_allow_html=True)
+     st.info("데이터는 `data/` 디렉토리에 `<match_id>.json` 파일로 저장됩니다.")
 
 
 # ============================================================================
@@ -883,7 +918,10 @@ elif menu == "📋 DETAIL":
             st.rerun()
 
         # Load stored match details (fallback to hard‑coded)
-        details = load_match_details(f"서초중 vs {opp}")
+        if st.session_state.get('last_match_details'):
+            details = st.session_state['last_match_details']
+        else:
+            details = load_match_details(f"서초중 vs {opp}")
 
         # 1. 경기 요약 헤더 카드
         result_text = details.get('score', match.get('결과', ''))
@@ -931,10 +969,9 @@ elif menu == "📋 DETAIL":
             events = []
             for entry in timeline:
                 minute = entry.get('minute')
-                ev = entry.get('event', '')
-                # Simple heuristic: assume home events contain "서초중" or no team indicator
-                team = 'home' if '서초중' in ev else 'away'
-                events.append((minute, team, ev, ''))
+                event = entry.get('event', '')
+                team = entry.get('team', 'home')
+                events.append((minute, team, event, ''))
             events.sort(key=lambda x: x[0])
             
             st.markdown('<div class="timeline-container"><div class="timeline-line"></div>', unsafe_allow_html=True)
